@@ -1,0 +1,230 @@
+{
+  "version": 6,
+  "cmakeMinimumRequired": {
+    "major": 3,
+    "minor": 25,
+    "patch": 0
+  },
+  "configurePresets": [
+    {
+      "name": "host",
+      "displayName": "Host build",
+      "description": "Windows host build using the repo-local WinLibs toolchain.",
+      "generator": "MinGW Makefiles",
+      "binaryDir": "${sourceDir}/build/host",
+      "cacheVariables": {
+        "CMAKE_CXX_COMPILER": "${sourceDir}/.local/winlibs/mingw64/bin/g++.exe",
+        "CMAKE_MAKE_PROGRAM": "${sourceDir}/.local/winlibs/mingw64/bin/mingw32-make.exe",
+        "MMIOPP_BUILD_DEMO": "ON",
+        "MMIOPP_BUILD_TESTS": "ON",
+        "MMIOPP_BUILD_QEMU_TARGET": "OFF",
+        "MMIOPP_BUILD_QEMU_R5_TARGET": "OFF"
+      }
+    },
+    {
+      "name": "qemu",
+      "displayName": "QEMU Cortex-M3 build",
+      "description": "Windows Cortex-M3/QEMU build using the repo-local make tool and the Arm GNU Toolchain.",
+      "generator": "MinGW Makefiles",
+      "binaryDir": "${sourceDir}/build/qemu",
+      "toolchainFile": "${sourceDir}/cmake/toolchains/arm-none-eabi-gcc.cmake",
+      "environment": {
+        "MMIOPP_QEMU_SYSTEM_ARM": "C:/Program Files/qemu/qemu-system-arm.exe"
+      },
+      "cacheVariables": {
+        "CMAKE_MAKE_PROGRAM": "${sourceDir}/.local/winlibs/mingw64/bin/mingw32-make.exe",
+        "MMIOPP_BUILD_DEMO": "OFF",
+        "MMIOPP_BUILD_TESTS": "OFF",
+        "MMIOPP_BUILD_QEMU_TARGET": "ON",
+        "MMIOPP_BUILD_QEMU_R5_TARGET": "OFF"
+      }
+    },
+    {
+      "name": "qemu-r5",
+      "displayName": "QEMU Cortex-R5 build",
+      "description": "Windows Cortex-R5/QEMU build using the repo-local make tool and the Arm GNU Toolchain.",
+      "generator": "MinGW Makefiles",
+      "binaryDir": "${sourceDir}/build/qemu-r5",
+      "toolchainFile": "${sourceDir}/cmake/toolchains/arm-none-eabi-gcc.cmake",
+      "environment": {
+        "MMIOPP_QEMU_SYSTEM_ARM": "C:/Program Files/qemu/qemu-system-arm.exe"
+      },
+      "cacheVariables": {
+        "CMAKE_MAKE_PROGRAM": "${sourceDir}/.local/winlibs/mingw64/bin/mingw32-make.exe",
+        "MMIOPP_BUILD_DEMO": "OFF",
+        "MMIOPP_BUILD_TESTS": "OFF",
+        "MMIOPP_BUILD_QEMU_TARGET": "OFF",
+        "MMIOPP_BUILD_QEMU_R5_TARGET": "ON"
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "host",
+      "configurePreset": "host"
+    },
+    {
+      "name": "qemu",
+      "configurePreset": "qemu"
+    },
+    {
+      "name": "qemu-run",
+      "configurePreset": "qemu",
+      "targets": [
+        "run_mmiopp_qemu_tests"
+      ]
+    },
+    {
+      "name": "qemu-r5",
+      "configurePreset": "qemu-r5"
+    },
+    {
+      "name": "qemu-r5-run",
+      "configurePreset": "qemu-r5",
+      "targets": [
+        "run_mmiopp_qemu_r5_tests"
+      ]
+    }
+  ],
+  "testPresets": [
+    {
+      "name": "host",
+      "configurePreset": "host",
+      "output": {
+        "outputOnFailure": true
+      }
+    },
+    {
+      "name": "qemu",
+      "configurePreset": "qemu",
+      "output": {
+        "outputOnFailure": true
+      }
+    },
+    {
+      "name": "qemu-r5",
+      "configurePreset": "qemu-r5",
+      "output": {
+        "outputOnFailure": true
+      }
+    }
+  ],
+  "workflowPresets": [
+    {
+      "name": "host",
+      "steps": [
+        {
+          "type": "configure",
+          "name": "host"
+        },
+        {
+          "type": "build",
+          "name": "host"
+        }
+      ]
+    },
+    {
+      "name": "host-test",
+      "steps": [
+        {
+          "type": "configure",
+          "name": "host"
+        },
+        {
+          "type": "build",
+          "name": "host"
+        },
+        {
+          "type": "test",
+          "name": "host"
+        }
+      ]
+    },
+    {
+      "name": "qemu-build",
+      "steps": [
+        {
+          "type": "configure",
+          "name": "qemu"
+        },
+        {
+          "type": "build",
+          "name": "qemu"
+        }
+      ]
+    },
+    {
+      "name": "qemu-run",
+      "steps": [
+        {
+          "type": "configure",
+          "name": "qemu"
+        },
+        {
+          "type": "build",
+          "name": "qemu-run"
+        }
+      ]
+    },
+    {
+      "name": "qemu-test",
+      "steps": [
+        {
+          "type": "configure",
+          "name": "qemu"
+        },
+        {
+          "type": "build",
+          "name": "qemu"
+        },
+        {
+          "type": "test",
+          "name": "qemu"
+        }
+      ]
+    },
+    {
+      "name": "qemu-r5-build",
+      "steps": [
+        {
+          "type": "configure",
+          "name": "qemu-r5"
+        },
+        {
+          "type": "build",
+          "name": "qemu-r5"
+        }
+      ]
+    },
+    {
+      "name": "qemu-r5-run",
+      "steps": [
+        {
+          "type": "configure",
+          "name": "qemu-r5"
+        },
+        {
+          "type": "build",
+          "name": "qemu-r5-run"
+        }
+      ]
+    },
+    {
+      "name": "qemu-r5-test",
+      "steps": [
+        {
+          "type": "configure",
+          "name": "qemu-r5"
+        },
+        {
+          "type": "build",
+          "name": "qemu-r5"
+        },
+        {
+          "type": "test",
+          "name": "qemu-r5"
+        }
+      ]
+    }
+  ]
+}
