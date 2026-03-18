@@ -1,14 +1,14 @@
 # Latest CI Signals
 
-Generated at: 2026-03-18T00:06:09.2753835Z
+Generated at: 2026-03-18T00:20:39.9425839Z
 
 ## Test Matrix
 
 | Preset | Status | Passed | Failed | Total | Compile-Fail | Runtime | Workflow Duration (s) |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| Host | passed | 109 | 0 | 109 | 108 | 1 | 0 |
-| QEMU Cortex-M3 | passed | 1 | 0 | 1 | 0 | 1 | 5.89 |
-| QEMU Cortex-R5 | passed | 1 | 0 | 1 | 0 | 1 | 5.89 |
+| Host | passed | 109 | 0 | 109 | 108 | 1 | 13.94 |
+| QEMU Cortex-M3 | passed | 1 | 0 | 1 | 0 | 1 | 1.84 |
+| QEMU Cortex-R5 | passed | 1 | 0 | 1 | 0 | 1 | 1.92 |
 
 ## Coverage
 
