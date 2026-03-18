@@ -11,8 +11,8 @@ extern "C" {
 #if defined(MMIOCPP_TARGET_COVERAGE)
 extern "C" const gcov_info* const __gcov_info_start[];
 extern "C" const gcov_info* const __gcov_info_end[];
+extern "C" [[noreturn]] void mmiocpp_target_exit(int status);
 #endif
-
 namespace {
 
 #if defined(MMIOCPP_TARGET_COVERAGE)
@@ -33,6 +33,10 @@ void report_coverage_error(const char* message) {
   g_coverageWriteFailed = true;
 }
 
+[[noreturn]] void fail_coverage_runtime(const char* message) {
+  report_coverage_error(message);
+  mmiocpp_target_exit(3);
+}
 void* coverage_allocate(unsigned length, void*) {
   const auto alignment = static_cast<std::size_t>(alignof(std::uintptr_t));
   const auto alignedOffset = (g_coverageScratchUsed + alignment - 1u) & ~(alignment - 1u);
@@ -95,6 +99,16 @@ void dump_coverage() {
 #endif
 
 }  // namespace
+
+#if defined(MMIOCPP_TARGET_COVERAGE)
+extern "C" void abort(void) {
+  fail_coverage_runtime("unexpected libgcov abort");
+}
+
+extern "C" std::size_t fread(void*, std::size_t, std::size_t, void*) {
+  fail_coverage_runtime("unexpected libgcov file read");
+}
+#endif
 
 extern "C" [[noreturn]] void mmiocpp_target_exit(int status) {
 #if defined(MMIOCPP_TARGET_COVERAGE)
