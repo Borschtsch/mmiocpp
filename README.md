@@ -5,8 +5,6 @@
 [![QEMU Cortex-M3](https://github.com/Borschtsch/mmiocpp/actions/workflows/qemu-m3.yml/badge.svg?branch=main&event=push)](https://github.com/Borschtsch/mmiocpp/actions/workflows/qemu-m3.yml)
 [![QEMU Cortex-R5](https://github.com/Borschtsch/mmiocpp/actions/workflows/qemu-r5.yml/badge.svg?branch=main&event=push)](https://github.com/Borschtsch/mmiocpp/actions/workflows/qemu-r5.yml)
 
-Live suite status comes from GitHub Actions. Detailed counts live in each workflow summary, and core coverage is published through Codecov from the dedicated coverage workflow.
-
 MMIO++ is a C++ memory-mapped I/O framework for developers who already know the feel of C register macros and want to keep that direct style without keeping the usual hazards.
 
 The goal is not to turn register access into a heavyweight abstraction. The goal is to let register code still look familiar:
