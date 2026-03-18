@@ -98,8 +98,6 @@ MMIO++ is designed to stay zero-overhead in the usual embedded sense:
 - Shadow registers are plain non-volatile local values, so the compiler can fold several updates together before one final commit.
 - The framework uses compile-time types to reject misuse instead of runtime checks.
 
-For the longer project story and the API rationale beyond the quickstart, see [docs/index.html](docs/index.html).
-
 ## Project Layout
 
 - `include/mmio.hpp`: core public header only.
@@ -120,21 +118,21 @@ Install the expected Windows toolchain layout with:
 powershell -ExecutionPolicy Bypass -File .\scripts\bootstrap.ps1
 ```
 
-The bootstrap installs CMake, the Arm GNU Toolchain, QEMU, and the repo-local WinLibs fallback that the committed presets use.
+The bootstrap downloads and installs WinLibs, CMake, Arm GNU Toolchain, GNU make, and xPack QEMU Arm into `.local`. The committed scripts, presets, and toolchain files resolve those repo-local copies directly and do not depend on machine-installed tools.
 
 ## Canonical Windows Commands
 
-Use the committed CMake workflow presets as the primary entrypoints:
+Use the repo-local CMake executable with the committed workflow presets:
 
 ```powershell
-cmake --workflow --preset host
-cmake --workflow --preset host-test
-cmake --workflow --preset qemu-m3-build
-cmake --workflow --preset qemu-m3-run
-cmake --workflow --preset qemu-m3-test
-cmake --workflow --preset qemu-r5-build
-cmake --workflow --preset qemu-r5-run
-cmake --workflow --preset qemu-r5-test
+.\.local\cmake\bin\cmake.exe --workflow --preset host
+.\.local\cmake\bin\cmake.exe --workflow --preset host-test
+.\.local\cmake\bin\cmake.exe --workflow --preset qemu-m3-build
+.\.local\cmake\bin\cmake.exe --workflow --preset qemu-m3-run
+.\.local\cmake\bin\cmake.exe --workflow --preset qemu-m3-test
+.\.local\cmake\bin\cmake.exe --workflow --preset qemu-r5-build
+.\.local\cmake\bin\cmake.exe --workflow --preset qemu-r5-run
+.\.local\cmake\bin\cmake.exe --workflow --preset qemu-r5-test
 ```
 
 What they do:

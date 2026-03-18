@@ -14,7 +14,25 @@ set(MMIOCPP_QEMU_CPU "cortex-m3" CACHE STRING "QEMU CPU for the Cortex-M target.
 set(MMIOCPP_QEMU_R5_MACHINE "none" CACHE STRING "QEMU machine for the Cortex-R5 target.")
 set(MMIOCPP_QEMU_R5_CPU "cortex-r5" CACHE STRING "QEMU CPU for the Cortex-R5 target.")
 set(MMIOCPP_QEMU_R5_MEMORY "32M" CACHE STRING "RAM size for the Cortex-R5 target.")
+set(MMIOCPP_REPO_LOCAL_QEMU_SYSTEM_ARM "${CMAKE_CURRENT_SOURCE_DIR}/.local/qemu/bin/qemu-system-arm.exe")
 
+function(mmiocpp_require_qemu_system_arm)
+  if(NOT MMIOCPP_QEMU_SYSTEM_ARM AND DEFINED ENV{MMIOCPP_QEMU_SYSTEM_ARM} AND NOT "$ENV{MMIOCPP_QEMU_SYSTEM_ARM}" STREQUAL "")
+    set(MMIOCPP_QEMU_SYSTEM_ARM "$ENV{MMIOCPP_QEMU_SYSTEM_ARM}" CACHE FILEPATH "Path to qemu-system-arm." FORCE)
+  endif()
+
+  if(NOT MMIOCPP_QEMU_SYSTEM_ARM AND EXISTS "${MMIOCPP_REPO_LOCAL_QEMU_SYSTEM_ARM}")
+    set(MMIOCPP_QEMU_SYSTEM_ARM "${MMIOCPP_REPO_LOCAL_QEMU_SYSTEM_ARM}" CACHE FILEPATH "Path to qemu-system-arm." FORCE)
+  endif()
+
+  if(NOT MMIOCPP_QEMU_SYSTEM_ARM)
+    message(FATAL_ERROR "qemu-system-arm was not found at ${MMIOCPP_REPO_LOCAL_QEMU_SYSTEM_ARM}. Run scripts/bootstrap.ps1 -InstallQemu or set MMIOCPP_QEMU_SYSTEM_ARM explicitly.")
+  endif()
+
+  if(NOT EXISTS "${MMIOCPP_QEMU_SYSTEM_ARM}")
+    message(FATAL_ERROR "qemu-system-arm was configured as ${MMIOCPP_QEMU_SYSTEM_ARM}, but that file does not exist.")
+  endif()
+endfunction()
 add_library(mmiocpp INTERFACE)
 add_library(mmiocpp::mmiocpp ALIAS mmiocpp)
 
@@ -118,17 +136,7 @@ if(MMIOCPP_BUILD_QEMU_TARGET)
   enable_testing()
   enable_language(ASM)
 
-  if(NOT MMIOCPP_QEMU_SYSTEM_ARM AND DEFINED ENV{MMIOCPP_QEMU_SYSTEM_ARM} AND NOT "$ENV{MMIOCPP_QEMU_SYSTEM_ARM}" STREQUAL "")
-    set(MMIOCPP_QEMU_SYSTEM_ARM "$ENV{MMIOCPP_QEMU_SYSTEM_ARM}")
-  endif()
-
-  if(NOT MMIOCPP_QEMU_SYSTEM_ARM)
-    find_program(MMIOCPP_QEMU_SYSTEM_ARM
-      NAMES qemu-system-arm qemu-system-arm.exe
-      HINTS
-        "C:/Program Files/qemu"
-    )
-  endif()
+  mmiocpp_require_qemu_system_arm()
 
   set(_mmiocpp_qemu_map_file "${CMAKE_CURRENT_BINARY_DIR}/mmiocpp_qemu_tests.map")
 
@@ -202,17 +210,7 @@ if(MMIOCPP_BUILD_QEMU_R5_TARGET)
   enable_testing()
   enable_language(ASM)
 
-  if(NOT MMIOCPP_QEMU_SYSTEM_ARM AND DEFINED ENV{MMIOCPP_QEMU_SYSTEM_ARM} AND NOT "$ENV{MMIOCPP_QEMU_SYSTEM_ARM}" STREQUAL "")
-    set(MMIOCPP_QEMU_SYSTEM_ARM "$ENV{MMIOCPP_QEMU_SYSTEM_ARM}")
-  endif()
-
-  if(NOT MMIOCPP_QEMU_SYSTEM_ARM)
-    find_program(MMIOCPP_QEMU_SYSTEM_ARM
-      NAMES qemu-system-arm qemu-system-arm.exe
-      HINTS
-        "C:/Program Files/qemu"
-    )
-  endif()
+  mmiocpp_require_qemu_system_arm()
 
   set(_mmiocpp_qemu_r5_map_file "${CMAKE_CURRENT_BINARY_DIR}/mmiocpp_qemu_r5_tests.map")
 

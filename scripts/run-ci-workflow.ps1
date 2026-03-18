@@ -18,17 +18,13 @@ $resolvedBuildDir = if ([System.IO.Path]::IsPathRooted($BuildDir)) {
 New-Item -ItemType Directory -Force -Path $resolvedBuildDir | Out-Null
 $workflowLogPath = Join-Path $resolvedBuildDir 'ci-workflow.log'
 
-$cmake = Get-Command cmake -ErrorAction SilentlyContinue
-if (-not $cmake) {
-  $cmake = Get-Command (Join-Path $repoRoot '.local\winlibs\mingw64\bin\cmake.exe') -ErrorAction SilentlyContinue
-}
-
-if (-not $cmake) {
-  throw 'cmake was not found on PATH and the repo-local fallback was not present.'
+$cmakePath = Join-Path $repoRoot '.local\cmake\bin\cmake.exe'
+if (-not (Test-Path $cmakePath -PathType Leaf)) {
+  throw 'Repo-local cmake was not found at .local\\cmake\\bin\\cmake.exe. Run scripts/bootstrap.ps1 -InstallCMake first.'
 }
 
 $start = Get-Date
-& $cmake.Source --workflow --preset $Preset 2>&1 | Tee-Object -FilePath $workflowLogPath
+& $cmakePath --workflow --preset $Preset 2>&1 | Tee-Object -FilePath $workflowLogPath
 $exitCode = $LASTEXITCODE
 $duration = [math]::Round(((Get-Date) - $start).TotalSeconds, 2)
 

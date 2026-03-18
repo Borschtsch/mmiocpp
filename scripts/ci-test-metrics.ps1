@@ -32,16 +32,12 @@ $resolvedWorkflowLogPath = if ([string]::IsNullOrWhiteSpace($WorkflowLogPath)) {
   Join-Path $repoRoot $WorkflowLogPath
 }
 
-$ctest = Get-Command ctest -ErrorAction SilentlyContinue
-if (-not $ctest) {
-  $ctest = Get-Command (Join-Path $repoRoot '.local\winlibs\mingw64\bin\ctest.exe') -ErrorAction SilentlyContinue
+$ctestPath = Join-Path $repoRoot '.local\cmake\bin\ctest.exe'
+if (-not (Test-Path $ctestPath -PathType Leaf)) {
+  throw 'Repo-local ctest was not found at .local\\cmake\\bin\\ctest.exe. Run scripts/bootstrap.ps1 -InstallCMake first.'
 }
 
-if (-not $ctest) {
-  throw 'ctest was not found on PATH and the repo-local fallback was not present.'
-}
-
-$testsJson = & $ctest.Source --preset $TestPreset -N --show-only=json-v1 | Out-String
+$testsJson = & $ctestPath --preset $TestPreset -N --show-only=json-v1 | Out-String
 $testsData = $testsJson | ConvertFrom-Json
 $tests = @($testsData.tests)
 

@@ -88,37 +88,19 @@ function Resolve-GcovExecutable {
       }
     }
   }
-
-  if (-not [string]::IsNullOrWhiteSpace($compilerPath) -and ($compilerPath -like '*arm-none-eabi*')) {
-    $armCommand = Get-Command arm-none-eabi-gcov -ErrorAction SilentlyContinue
-    if ($armCommand) {
-      return $armCommand.Source
-    }
-
-    $armCandidates = @(
-      Get-ChildItem -Path 'C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi' -Recurse -Filter arm-none-eabi-gcov.exe -ErrorAction SilentlyContinue |
-        Select-Object -ExpandProperty FullName
-    )
-    if ($armCandidates.Count -gt 0) {
-      return $armCandidates[0]
-    }
+  $repoLocalHostGcov = Join-Path $RepoRoot '.local\winlibs\mingw64\bin\gcov.exe'
+  if (Test-Path $repoLocalHostGcov) {
+    return (Resolve-Path $repoLocalHostGcov).Path
   }
 
-  $gcov = Get-Command gcov -ErrorAction SilentlyContinue
-  if ($gcov) {
-    return $gcov.Source
-  }
-
-  $repoLocalGcov = Join-Path $RepoRoot '.local\winlibs\mingw64\bin\gcov.exe'
-  if (Test-Path $repoLocalGcov) {
-    return (Resolve-Path $repoLocalGcov).Path
+  $repoLocalArmGcov = Join-Path $RepoRoot '.local\arm-gnu-toolchain\bin\arm-none-eabi-gcov.exe'
+  if (Test-Path $repoLocalArmGcov) {
+    return (Resolve-Path $repoLocalArmGcov).Path
   }
 
   throw 'gcov was not found. Provide -GcovExe or ensure the matching toolchain gcov executable is installed.'
 }
-
 $gcovExe = Resolve-GcovExecutable -RequestedPath $GcovExe -BuildDir $resolvedBuildDir -RepoRoot $repoRoot
-
 $gcdaFiles = @(
   Get-ChildItem -Path $resolvedBuildDir -Recurse -Filter *.gcda -ErrorAction SilentlyContinue |
     Select-Object -ExpandProperty FullName

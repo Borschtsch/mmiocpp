@@ -4,71 +4,56 @@ set(CMAKE_TRY_COMPILE_TARGET_TYPE STATIC_LIBRARY)
 
 set(_mmiocpp_arm_gcc_hint "$ENV{MMIOCPP_ARM_GCC}")
 set(_mmiocpp_arm_gxx_hint "$ENV{MMIOCPP_ARM_GXX}")
-
-if(WIN32)
-  file(GLOB _mmiocpp_arm_gcc_candidates
-    "C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/*/bin/arm-none-eabi-gcc.exe"
-  )
-  file(GLOB _mmiocpp_arm_gxx_candidates
-    "C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/*/bin/arm-none-eabi-g++.exe"
-  )
-
-  if(_mmiocpp_arm_gcc_candidates)
-    list(SORT _mmiocpp_arm_gcc_candidates COMPARE NATURAL ORDER DESCENDING)
-    list(GET _mmiocpp_arm_gcc_candidates 0 _mmiocpp_arm_gcc_default)
-  endif()
-
-  if(_mmiocpp_arm_gxx_candidates)
-    list(SORT _mmiocpp_arm_gxx_candidates COMPARE NATURAL ORDER DESCENDING)
-    list(GET _mmiocpp_arm_gxx_candidates 0 _mmiocpp_arm_gxx_default)
-  endif()
-endif()
+get_filename_component(_mmiocpp_repo_root "${CMAKE_CURRENT_LIST_DIR}/../.." ABSOLUTE)
+set(_mmiocpp_repo_local_arm_root "${_mmiocpp_repo_root}/.local/arm-gnu-toolchain")
+set(_mmiocpp_repo_local_arm_gcc "${_mmiocpp_repo_local_arm_root}/bin/arm-none-eabi-gcc.exe")
+set(_mmiocpp_repo_local_arm_gxx "${_mmiocpp_repo_local_arm_root}/bin/arm-none-eabi-g++.exe")
 
 if(_mmiocpp_arm_gcc_hint)
   set(MMIOCPP_ARM_GCC "${_mmiocpp_arm_gcc_hint}" CACHE FILEPATH "Path to arm-none-eabi-gcc." FORCE)
-elseif(_mmiocpp_arm_gcc_default)
-  set(MMIOCPP_ARM_GCC "${_mmiocpp_arm_gcc_default}" CACHE FILEPATH "Path to arm-none-eabi-gcc." FORCE)
+elseif(EXISTS "${_mmiocpp_repo_local_arm_gcc}")
+  set(MMIOCPP_ARM_GCC "${_mmiocpp_repo_local_arm_gcc}" CACHE FILEPATH "Path to arm-none-eabi-gcc." FORCE)
 else()
-  find_program(MMIOCPP_ARM_GCC
-    NAMES arm-none-eabi-gcc arm-none-eabi-gcc.exe
-    HINTS
-      "C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi"
-    PATH_SUFFIXES bin
-    DOC "Path to arm-none-eabi-gcc."
-  )
+  message(FATAL_ERROR "arm-none-eabi-gcc was not found at ${_mmiocpp_repo_local_arm_gcc}. Run scripts/bootstrap.ps1 -InstallArmToolchain or set MMIOCPP_ARM_GCC explicitly.")
 endif()
 
 if(_mmiocpp_arm_gxx_hint)
   set(MMIOCPP_ARM_GXX "${_mmiocpp_arm_gxx_hint}" CACHE FILEPATH "Path to arm-none-eabi-g++.exe" FORCE)
-elseif(_mmiocpp_arm_gxx_default)
-  set(MMIOCPP_ARM_GXX "${_mmiocpp_arm_gxx_default}" CACHE FILEPATH "Path to arm-none-eabi-g++.exe" FORCE)
+elseif(EXISTS "${_mmiocpp_repo_local_arm_gxx}")
+  set(MMIOCPP_ARM_GXX "${_mmiocpp_repo_local_arm_gxx}" CACHE FILEPATH "Path to arm-none-eabi-g++.exe" FORCE)
 else()
-  find_program(MMIOCPP_ARM_GXX
-    NAMES arm-none-eabi-g++ arm-none-eabi-g++.exe
-    HINTS
-      "C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi"
-    PATH_SUFFIXES bin
-    DOC "Path to arm-none-eabi-g++."
-  )
-endif()
-
-if(NOT MMIOCPP_ARM_GCC)
-  message(FATAL_ERROR "arm-none-eabi-gcc was not found. Set MMIOCPP_ARM_GCC or install the Arm GNU Toolchain.")
-endif()
-
-if(NOT MMIOCPP_ARM_GXX)
-  message(FATAL_ERROR "arm-none-eabi-g++ was not found. Set MMIOCPP_ARM_GXX or install the Arm GNU Toolchain.")
+  message(FATAL_ERROR "arm-none-eabi-g++ was not found at ${_mmiocpp_repo_local_arm_gxx}. Run scripts/bootstrap.ps1 -InstallArmToolchain or set MMIOCPP_ARM_GXX explicitly.")
 endif()
 
 set(CMAKE_C_COMPILER "${MMIOCPP_ARM_GCC}" CACHE FILEPATH "" FORCE)
 set(CMAKE_CXX_COMPILER "${MMIOCPP_ARM_GXX}" CACHE FILEPATH "" FORCE)
 set(CMAKE_ASM_COMPILER "${MMIOCPP_ARM_GCC}" CACHE FILEPATH "" FORCE)
 
+# Let CMake's compiler ABI probe link a bare-metal test binary without
+# requiring project-specific syscall stubs or a custom linker script.
+set(CMAKE_EXE_LINKER_FLAGS_INIT "--specs=nosys.specs")
+
 get_filename_component(_mmiocpp_arm_bin_dir "${MMIOCPP_ARM_GCC}" DIRECTORY)
 get_filename_component(_mmiocpp_arm_root_dir "${_mmiocpp_arm_bin_dir}" DIRECTORY)
 
+set(CMAKE_AR "${_mmiocpp_arm_bin_dir}/arm-none-eabi-ar.exe" CACHE FILEPATH "" FORCE)
+set(CMAKE_RANLIB "${_mmiocpp_arm_bin_dir}/arm-none-eabi-ranlib.exe" CACHE FILEPATH "" FORCE)
+set(CMAKE_LINKER "${_mmiocpp_arm_bin_dir}/arm-none-eabi-ld.exe" CACHE FILEPATH "" FORCE)
+set(CMAKE_NM "${_mmiocpp_arm_bin_dir}/arm-none-eabi-nm.exe" CACHE FILEPATH "" FORCE)
+set(CMAKE_OBJCOPY "${_mmiocpp_arm_bin_dir}/arm-none-eabi-objcopy.exe" CACHE FILEPATH "" FORCE)
+set(CMAKE_OBJDUMP "${_mmiocpp_arm_bin_dir}/arm-none-eabi-objdump.exe" CACHE FILEPATH "" FORCE)
+set(CMAKE_READELF "${_mmiocpp_arm_bin_dir}/arm-none-eabi-readelf.exe" CACHE FILEPATH "" FORCE)
+set(CMAKE_STRIP "${_mmiocpp_arm_bin_dir}/arm-none-eabi-strip.exe" CACHE FILEPATH "" FORCE)
+set(CMAKE_ADDR2LINE "${_mmiocpp_arm_bin_dir}/arm-none-eabi-addr2line.exe" CACHE FILEPATH "" FORCE)
+set(CMAKE_C_COMPILER_AR "${_mmiocpp_arm_bin_dir}/arm-none-eabi-gcc-ar.exe" CACHE FILEPATH "" FORCE)
+set(CMAKE_C_COMPILER_RANLIB "${_mmiocpp_arm_bin_dir}/arm-none-eabi-gcc-ranlib.exe" CACHE FILEPATH "" FORCE)
+set(CMAKE_CXX_COMPILER_AR "${_mmiocpp_arm_bin_dir}/arm-none-eabi-gcc-ar.exe" CACHE FILEPATH "" FORCE)
+set(CMAKE_CXX_COMPILER_RANLIB "${_mmiocpp_arm_bin_dir}/arm-none-eabi-gcc-ranlib.exe" CACHE FILEPATH "" FORCE)
+
 set(CMAKE_EXECUTABLE_SUFFIX ".elf")
 set(CMAKE_FIND_ROOT_PATH "${_mmiocpp_arm_root_dir}")
+set(CMAKE_FIND_USE_SYSTEM_ENVIRONMENT_PATH FALSE)
+set(CMAKE_FIND_USE_CMAKE_SYSTEM_PATH FALSE)
 set(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER)
 set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY ONLY)
 set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)

@@ -23,7 +23,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Bootstrap coverage toolchain
-        run: ./scripts/bootstrap.ps1 -InstallCMake -InstallArmToolchain -InstallQemu -InstallNinja
+        run: ./scripts/bootstrap.ps1 -InstallCMake -InstallArmToolchain -InstallQemu -InstallMake
 
       - name: Run QEMU Cortex-R5 coverage workflow preset
         run: |
