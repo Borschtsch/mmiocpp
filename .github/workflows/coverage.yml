@@ -25,19 +25,20 @@ jobs:
       - name: Bootstrap Windows toolchain
         run: ./scripts/bootstrap.ps1
 
-      - name: Run host coverage workflow preset
+      - name: Run QEMU Cortex-R5 coverage workflow preset
         run: |
           .\scripts\run-ci-coverage.ps1 `
-            -Preset "host-coverage-test" `
-            -BuildDir "build/host-coverage"
+            -Preset "qemu-r5-coverage-test" `
+            -BuildDir "build/qemu-r5-coverage" `
+            -CoverageSource "the QEMU Cortex-R5 runtime suite"
 
-      - name: Publish host coverage test metrics
+      - name: Publish QEMU Cortex-R5 coverage test metrics
         if: always()
         run: |
           .\scripts\ci-test-metrics.ps1 `
-            -Preset "host-coverage-test" `
-            -TestPreset "host-coverage" `
-            -BuildDir "build/host-coverage" `
+            -Preset "qemu-r5-coverage-test" `
+            -TestPreset "qemu-r5-coverage" `
+            -BuildDir "build/qemu-r5-coverage" `
             -WorkflowDurationSeconds "$env:WORKFLOW_DURATION_SECONDS" `
             -WorkflowExitCode "$env:WORKFLOW_EXIT_CODE" `
             -WorkflowLogPath "$env:WORKFLOW_LOG_PATH"
@@ -46,23 +47,23 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: host-coverage
+          name: qemu-r5-coverage
           path: |
-            build/host-coverage/ci-workflow.log
-            build/host-coverage/Testing/Temporary/LastTest.log
-            build/host-coverage/Testing/Temporary/CTestCostData.txt
-            build/host-coverage/ci-metrics.json
-            build/host-coverage/coverage/coverage-summary.json
-            build/host-coverage/coverage/coverage-summary.md
-            build/host-coverage/coverage/coverage-core.info
-            build/host-coverage/coverage/coverage-product.info
+            build/qemu-r5-coverage/ci-workflow.log
+            build/qemu-r5-coverage/Testing/Temporary/LastTest.log
+            build/qemu-r5-coverage/Testing/Temporary/CTestCostData.txt
+            build/qemu-r5-coverage/ci-metrics.json
+            build/qemu-r5-coverage/coverage/coverage-summary.json
+            build/qemu-r5-coverage/coverage/coverage-summary.md
+            build/qemu-r5-coverage/coverage/coverage-core.info
+            build/qemu-r5-coverage/coverage/coverage-product.info
           if-no-files-found: ignore
 
       - name: Upload to Codecov
         if: always()
         uses: codecov/codecov-action@v5
         with:
-          files: build/host-coverage/coverage/coverage-core.info
+          files: build/qemu-r5-coverage/coverage/coverage-core.info
           disable_search: true
           flags: core
           name: mmiocpp-core-coverage

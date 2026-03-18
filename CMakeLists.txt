@@ -7,7 +7,7 @@ option(MMIOCPP_BUILD_TESTS "Build the host compile-check executable" ON)
 option(MMIOCPP_BUILD_QEMU_TARGET "Build the Cortex-M3 QEMU target runtime tests" OFF)
 option(MMIOCPP_BUILD_QEMU_R5_TARGET "Build the Cortex-R5 QEMU target runtime tests" OFF)
 option(MMIOCPP_ENABLE_COVERAGE "Build host executables with GCC/Clang coverage instrumentation" OFF)
-
+option(MMIOCPP_ENABLE_TARGET_COVERAGE "Build QEMU target runtimes with GCC freestanding coverage instrumentation" OFF)
 set(MMIOCPP_QEMU_SYSTEM_ARM "" CACHE FILEPATH "Path to qemu-system-arm.")
 set(MMIOCPP_QEMU_MACHINE "mps2-an385" CACHE STRING "QEMU machine for the Cortex-M target.")
 set(MMIOCPP_QEMU_CPU "cortex-m3" CACHE STRING "QEMU CPU for the Cortex-M target.")
@@ -32,6 +32,19 @@ function(mmiocpp_enable_coverage target_name)
       target_link_options(${target_name} PRIVATE --coverage)
     else()
       message(WARNING "MMIOCPP_ENABLE_COVERAGE is only implemented for GNU and Clang host builds.")
+    endif()
+  endif()
+endfunction()
+
+function(mmiocpp_enable_target_coverage target_name)
+  if(MMIOCPP_ENABLE_TARGET_COVERAGE)
+    if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+      target_compile_options(${target_name} PRIVATE -O0 -g --coverage -fprofile-info-section -fprofile-abs-path)
+      target_link_options(${target_name} PRIVATE --coverage)
+      target_link_libraries(${target_name} PRIVATE gcov)
+      target_compile_definitions(${target_name} PRIVATE MMIOCPP_TARGET_COVERAGE=1)
+    else()
+      message(WARNING "MMIOCPP_ENABLE_TARGET_COVERAGE is only implemented for GNU bare-metal builds.")
     endif()
   endif()
 endfunction()
@@ -235,6 +248,13 @@ if(MMIOCPP_BUILD_QEMU_R5_TARGET)
       "-Wl,-T,${CMAKE_CURRENT_SOURCE_DIR}/targets/qemu-cortex-r5/linker.ld"
       "-Wl,-Map,${_mmiocpp_qemu_r5_map_file}"
   )
+  mmiocpp_enable_target_coverage(mmiocpp_qemu_r5_tests)
+  if(MMIOCPP_ENABLE_TARGET_COVERAGE AND CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    set_source_files_properties(
+      targets/qemu-cortex-r5/runtime.cpp
+      PROPERTIES COMPILE_OPTIONS "-fno-profile-arcs;-fno-test-coverage"
+    )
+  endif()
   set_target_properties(mmiocpp_qemu_r5_tests PROPERTIES SUFFIX ".elf")
 
   if(MMIOCPP_QEMU_SYSTEM_ARM)

@@ -67,6 +67,16 @@
         "MMIOCPP_BUILD_QEMU_TARGET": "OFF",
         "MMIOCPP_BUILD_QEMU_R5_TARGET": "ON"
       }
+    },
+    {
+      "name": "qemu-r5-coverage",
+      "displayName": "QEMU Cortex-R5 coverage build",
+      "description": "Windows Cortex-R5/QEMU build with freestanding GCC coverage instrumentation.",
+      "inherits": "qemu-r5",
+      "binaryDir": "${sourceDir}/build/qemu-r5-coverage",
+      "cacheVariables": {
+        "MMIOCPP_ENABLE_TARGET_COVERAGE": "ON"
+      }
     }
   ],
   "buildPresets": [
@@ -99,6 +109,10 @@
       "targets": [
         "run_mmiocpp_qemu_r5_tests"
       ]
+    },
+    {
+      "name": "qemu-r5-coverage",
+      "configurePreset": "qemu-r5-coverage"
     }
   ],
   "testPresets": [
@@ -126,6 +140,13 @@
     {
       "name": "qemu-r5",
       "configurePreset": "qemu-r5",
+      "output": {
+        "outputOnFailure": true
+      }
+    },
+    {
+      "name": "qemu-r5-coverage",
+      "configurePreset": "qemu-r5-coverage",
       "output": {
         "outputOnFailure": true
       }
@@ -262,6 +283,23 @@
         {
           "type": "test",
           "name": "qemu-r5"
+        }
+      ]
+    },
+    {
+      "name": "qemu-r5-coverage-test",
+      "steps": [
+        {
+          "type": "configure",
+          "name": "qemu-r5-coverage"
+        },
+        {
+          "type": "build",
+          "name": "qemu-r5-coverage"
+        },
+        {
+          "type": "test",
+          "name": "qemu-r5-coverage"
         }
       ]
     }

@@ -2,7 +2,11 @@ param(
   [Parameter(Mandatory = $true)]
   [string]$BuildDir,
 
-  [string]$OutputDir = ''
+  [string]$OutputDir = '',
+
+  [string]$GcovExe = '',
+
+  [string]$CoverageSource = 'the instrumented test build'
 )
 
 $ErrorActionPreference = 'Stop'
@@ -29,13 +33,91 @@ if (Test-Path $gcovOutputDir) {
 }
 New-Item -ItemType Directory -Force -Path $gcovOutputDir | Out-Null
 
-$gcov = Get-Command gcov -ErrorAction SilentlyContinue
-if (-not $gcov) {
-  $gcov = Get-Command (Join-Path $repoRoot '.local\winlibs\mingw64\bin\gcov.exe') -ErrorAction SilentlyContinue
+function Get-CMakeCacheValue {
+  param(
+    [string]$CachePath,
+    [string]$VariableName
+  )
+
+  if (-not (Test-Path $CachePath)) {
+    return $null
+  }
+
+  $pattern = '^{0}:[^=]+=(.*)$' -f [regex]::Escape($VariableName)
+  foreach ($line in [System.IO.File]::ReadLines($CachePath)) {
+    $match = [regex]::Match($line, $pattern)
+    if ($match.Success) {
+      return $match.Groups[1].Value.Trim()
+    }
+  }
+
+  return $null
 }
-if (-not $gcov) {
-  throw 'gcov was not found on PATH and the repo-local fallback was not present.'
+
+function Resolve-GcovExecutable {
+  param(
+    [string]$RequestedPath,
+    [string]$BuildDir,
+    [string]$RepoRoot
+  )
+
+  if (-not [string]::IsNullOrWhiteSpace($RequestedPath)) {
+    $candidate = if ([System.IO.Path]::IsPathRooted($RequestedPath)) {
+      $RequestedPath
+    } else {
+      Join-Path $RepoRoot $RequestedPath
+    }
+
+    if (-not (Test-Path $candidate)) {
+      throw "The requested gcov executable was not found: $candidate"
+    }
+
+    return (Resolve-Path $candidate).Path
+  }
+
+  $cachePath = Join-Path $BuildDir 'CMakeCache.txt'
+  $compilerPath = Get-CMakeCacheValue -CachePath $cachePath -VariableName 'CMAKE_CXX_COMPILER'
+  if (-not [string]::IsNullOrWhiteSpace($compilerPath)) {
+    $compilerDir = Split-Path -Path $compilerPath -Parent
+    $compilerLeaf = Split-Path -Path $compilerPath -Leaf
+    if ($compilerLeaf -match 'g\+\+(\.exe)?$') {
+      $gcovLeaf = $compilerLeaf -replace 'g\+\+(\.exe)?$', 'gcov$1'
+      $siblingPath = Join-Path $compilerDir $gcovLeaf
+      if (Test-Path $siblingPath) {
+        return (Resolve-Path $siblingPath).Path
+      }
+    }
+  }
+
+  if (-not [string]::IsNullOrWhiteSpace($compilerPath) -and ($compilerPath -like '*arm-none-eabi*')) {
+    $armCommand = Get-Command arm-none-eabi-gcov -ErrorAction SilentlyContinue
+    if ($armCommand) {
+      return $armCommand.Source
+    }
+
+    $armCandidates = @(
+      Get-ChildItem -Path 'C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi' -Recurse -Filter arm-none-eabi-gcov.exe -ErrorAction SilentlyContinue |
+        Select-Object -ExpandProperty FullName
+    )
+    if ($armCandidates.Count -gt 0) {
+      return $armCandidates[0]
+    }
+  }
+
+  $gcov = Get-Command gcov -ErrorAction SilentlyContinue
+  if ($gcov) {
+    return $gcov.Source
+  }
+
+  $repoLocalGcov = Join-Path $RepoRoot '.local\winlibs\mingw64\bin\gcov.exe'
+  if (Test-Path $repoLocalGcov) {
+    return (Resolve-Path $repoLocalGcov).Path
+  }
+
+  throw 'gcov was not found. Provide -GcovExe or ensure the matching toolchain gcov executable is installed.'
 }
+
+$gcovExe = Resolve-GcovExecutable -RequestedPath $GcovExe -BuildDir $resolvedBuildDir -RepoRoot $repoRoot
 
 $gcdaFiles = @(
   Get-ChildItem -Path $resolvedBuildDir -Recurse -Filter *.gcda -ErrorAction SilentlyContinue |
@@ -48,7 +130,7 @@ if ($gcdaFiles.Count -eq 0) {
 Push-Location $gcovOutputDir
 try {
   foreach ($gcdaFile in $gcdaFiles) {
-    & $gcov.Source -b -c -l -p $gcdaFile 2>&1 | Out-Null
+    & $gcovExe -b -c -l -p $gcdaFile 2>&1 | Out-Null
   }
 } finally {
   Pop-Location
@@ -342,7 +424,7 @@ $markdown = @"
 
 Generated at: $($summary.generatedAtUtc)
 
-Coverage comes from the instrumented host test build and reflects code reached through the host test executable.
+Coverage comes from $CoverageSource and reflects code reached through that instrumented path.
 
 | Scope | Files | Line Coverage | Branch Coverage |
 | --- | ---: | ---: | ---: |

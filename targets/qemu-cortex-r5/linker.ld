@@ -23,6 +23,14 @@ SECTIONS
     _etext = .;
   } > RAM :text
 
+  .gcov_info : ALIGN(4)
+  {
+    PROVIDE(__gcov_info_start = .);
+    KEEP(*(.gcov_info))
+    . = ALIGN(4);
+    PROVIDE(__gcov_info_end = .);
+  } > RAM :data
+
   .data : ALIGN(4)
   {
     _sdata = .;
