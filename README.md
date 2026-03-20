@@ -7,7 +7,7 @@
 
 Homepage: https://borschtsch.github.io/mmiocpp/
 
-MMIO++ is a C++ memory-mapped I/O framework for developers who already know the feel of C register macros and want to keep that direct style without keeping the usual hazards.
+MMIO++ is a C++ type-safe memory-mapped I/O framework for developers who already know the feel of C register macros and want to keep that direct style without keeping the usual hazards.
 
 The goal is not to turn register access into a heavyweight abstraction. The goal is to let register code still look familiar:
 
